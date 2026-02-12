@@ -1,0 +1,126 @@
+:root {
+    --bg-gradient: linear-gradient(135deg, #2c003e 0%, #1a0b2e 100%);
+    --glass-bg: rgba(40, 10, 60, 0.6);
+    --glass-border: rgba(255, 215, 0, 0.3);
+    --primary-gradient: linear-gradient(90deg, #ff8c00, #ff0080);
+    --text-color: #fff;
+    --neon-green: #00ff00;
+    --neon-blue: #00ffea;
+    --neon-pink: #ff0080;
+    --neon-gold: #ffd700;
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow-x: hidden;
+}
+
+#root {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Glass Container */
+.container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(138, 43, 226, 0.4);
+    max-width: 1200px;
+    width: 90%;
+    position: relative;
+    z-index: 10;
+    margin: 0 auto;
+    /* Ensure horizontal centering */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Center children horizontally */
+}
+
+h1,
+h2,
+h3 {
+    margin-bottom: 20px;
+    background: linear-gradient(to right, #ffd700, #ff8c00);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    letter-spacing: 2px;
+}
+
+/* Buttons */
+button {
+    background: var(--primary-gradient);
+    border: none;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: white;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 10px;
+    box-shadow: 0 5px 15px rgba(255, 0, 128, 0.4);
+}
+
+button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(255, 0, 128, 0.6);
+}
+
+button.secondary {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+}
+
+button.secondary:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(138, 43, 226, 0.5);
+    padding: 12px 20px;
+    color: white;
+    border-radius: 25px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.3s;
+    width: 70%;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+input:focus {
+    border-color: var(--neon-gold);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* Utilities */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.hidden {
+    display: none;
+}

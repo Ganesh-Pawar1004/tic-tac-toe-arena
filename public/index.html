@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Landing Page -->
+        <div id="landing-screen" class="screen active">
+            <h1>Anonymous Arena</h1>
+            <div class="actions">
+                <button id="create-btn" class="btn primary">Create Room</button>
+                <div class="divider">OR</div>
+                <div class="join-form">
+                    <input type="text" id="join-code" placeholder="Enter Room Code">
+                    <input type="text" id="player-name" placeholder="Your Name">
+                    <button id="join-btn" class="btn secondary">Join Room</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen hidden">
+            <h2>Room: <span id="room-code-display"></span></h2>
+            <div id="host-controls" class="hidden">
+                <div class="settings">
+                    <label>Rounds: <input type="number" id="rounds-input" value="3" min="1" max="9"></label>
+                </div>
+                <button id="start-game-btn" class="btn primary">Start Game</button>
+            </div>
+            <div class="player-list">
+                <h3>Players (<span id="player-count">0</span>)</h3>
+                <ul id="players-ul"></ul>
+            </div>
+            <p id="lobby-status">Waiting for host...</p>
+        </div>
+
+        <!-- Host Monitor Screen -->
+        <div id="host-monitor-screen" class="screen hidden">
+            <h2>Tournament Dashboard</h2>
+            <div id="monitor-status" class="status-box">Monitoring...</div>
+            <div id="monitor-matches-list" class="matches-grid">
+                <!-- Active matches will cascade here -->
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div class="opponent-info">
+                    <span class="avatar">🕵️‍♂️</span>
+                    <span class="name">Anonymous Player</span>
+                </div>
+                <div class="score-board">
+                    <span id="my-score">0</span> - <span id="opponent-score">0</span>
+                </div>
+                <div class="timer">15</div>
+            </div>
+
+            <div class="board" id="tic-tac-toe-board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <div class="chat-controls">
+                <button class="emoji-btn">😂</button>
+                <button class="emoji-btn">😎</button>
+                <button class="emoji-btn">🤔</button>
+                <button class="emoji-btn">😱</button>
+                <button class="emoji-btn">😭</button>
+                <button class="emoji-btn">😡</button>
+            </div>
+            <div id="emoji-display"></div>
+        </div>
+
+        <!-- Waiting / Spectator Screen -->
+        <div id="spectator-screen" class="screen hidden">
+            <h2>Waiting for other players...</h2>
+            <div id="active-matches-list">
+                <!-- List of buttons to watch other games -->
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen hidden">
+            <h1>Tournament Results</h1>
+            <div id="final-reveal-container"></div>
+            <button id="back-to-lobby-btn" class="btn secondary">Back to Lobby</button>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
