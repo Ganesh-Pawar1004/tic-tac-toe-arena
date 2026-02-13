@@ -6,6 +6,7 @@ function Results() {
     const location = useLocation();
     const navigate = useNavigate();
     const results = location.state?.results || [];
+    const leaderboard = location.state?.leaderboard || [];
 
     const copyResults = () => {
         const text = `🏆 Tournament Results 🏆\n\n` + results.map(r =>
@@ -56,6 +57,50 @@ function Results() {
                     </motion.div>
                 ))}
             </div>
+
+            {leaderboard.length > 0 && (
+                <div className="leaderboard-section" style={{ marginTop: '60px', maxWidth: '800px', margin: '60px auto 0' }}>
+                    <h2 style={{ fontSize: '2.5em', marginBottom: '30px', color: '#ffd700', textShadow: '0 0 15px #ffd700' }}>
+                        🏆 Leaderboard
+                    </h2>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '20px', border: '1px solid rgba(255,215,0,0.3)' }}>
+                        {leaderboard.map((player, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -50 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.1 }}
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '15px 20px',
+                                    background: i < 3 ? 'rgba(255,215,0,0.1)' : 'rgba(255,255,255,0.03)',
+                                    borderRadius: '10px',
+                                    marginBottom: '10px',
+                                    border: i < 3 ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(255,255,255,0.1)'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <span style={{ fontSize: '1.5em', fontWeight: 'bold', width: '30px' }}>
+                                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                                    </span>
+                                    <span style={{ fontSize: '1.2em', fontWeight: i < 3 ? 'bold' : 'normal' }}>
+                                        {player.name}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                    <span style={{ color: '#00ff00' }}>{player.wins}W</span>
+                                    <span style={{ color: '#ff4444' }}>{player.losses}L</span>
+                                    <span style={{ fontWeight: 'bold', color: '#ffd700', fontSize: '1.2em' }}>
+                                        {player.winRate}%
+                                    </span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="actions" style={{ marginTop: '50px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
                 <button onClick={copyResults} style={{ background: '#00ffea', color: '#000', fontWeight: 'bold' }}>

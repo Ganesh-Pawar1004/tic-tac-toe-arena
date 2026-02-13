@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { socket } from '../socket';
 import { motion, AnimatePresence } from 'framer-motion';
 
-function Lobby() {
+function GameLobby() {
     const { roomCode } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -27,8 +27,9 @@ function Lobby() {
         }
 
         function onHostMonitorStart(data) {
-            if (isHost) {
-                navigate(`/monitor/${roomCode}`, { state: { ...data } });
+            console.log("📺 Host Monitor Start received:", data);
+            if (isHost || data.isHost) {
+                navigate(`/monitor/${roomCode}`, { state: { ...data, isHost: true } });
             }
         }
 
@@ -75,7 +76,18 @@ function Lobby() {
 
             <h3>Gladiators Ready: {players.length}</h3>
 
-            <motion.div className="lobby-grid" layout>
+            <motion.div
+                className="lobby-grid"
+                layout
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gap: '20px',
+                    width: '100%',
+                    maxWidth: '1200px',
+                    margin: '0 auto'
+                }}
+            >
                 <AnimatePresence>
                     {players.map((p) => (
                         <motion.div
@@ -106,4 +118,4 @@ function Lobby() {
     );
 }
 
-export default Lobby;
+export default GameLobby;

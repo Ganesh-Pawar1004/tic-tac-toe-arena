@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { socket } from '../socket';
 import { motion } from 'framer-motion';
+import { playGameSound } from '../utils/sounds';
 
 function Game() {
     const { roomCode } = useParams();
@@ -10,15 +11,61 @@ function Game() {
     const [isWaitingForOthers, setIsWaitingForOthers] = useState(false);
     const [roundResult, setRoundResult] = useState(null); // { winner: string, visible: boolean }
 
+    // Sync state on mount/rejoin
+    useEffect(() => {
+        if (location.state) {
+            if (location.state.board) setBoard(location.state.board);
+            if (location.state.turn) setIsMyTurn(location.state.turn === socket.id);
+            if (location.state.scores) {
+                const isP1 = location.state.symbol === 'X';
+                setScore({
+                    me: isP1 ? location.state.scores.p1 : location.state.scores.p2,
+                    them: isP1 ? location.state.scores.p2 : location.state.scores.p1
+                });
+            }
+        }
+    }, [location.state, socket.id]);
+
     // State from navigation or defaults
-    const [board, setBoard] = useState(Array(9).fill(null));
-    const [isMyTurn, setIsMyTurn] = useState(location.state?.symbol === 'X');
+    const [board, setBoard] = useState(location.state?.board || Array(9).fill(null));
+    const [isMyTurn, setIsMyTurn] = useState(() => {
+        if (location.state?.turn && socket.id) {
+            return location.state.turn === socket.id;
+        }
+        return location.state?.symbol === 'X';
+    });
     const [mySymbol, setMySymbol] = useState(location.state?.symbol || null);
     const symbolRef = useRef(location.state?.symbol || null);
     const [opponentName, setOpponentName] = useState(location.state?.opponent || "Anonymous");
-    const [score, setScore] = useState({ me: 0, them: 0 });
+    const [score, setScore] = useState(() => {
+        if (location.state?.scores && location.state?.symbol) {
+            const isP1 = location.state.symbol === 'X'; // Assuming X is always P1 in our current logic
+            return {
+                me: isP1 ? location.state.scores.p1 : location.state.scores.p2,
+                them: isP1 ? location.state.scores.p2 : location.state.scores.p1
+            };
+        }
+        return { me: 0, them: 0 };
+    });
     const [timer, setTimer] = useState(60); // Updated to 60 seconds
     const [pairId, setPairId] = useState(location.state?.pairId || null);
+    const [roundNumber, setRoundNumber] = useState(location.state?.round || 1);
+    const [isMuted, setIsMuted] = useState(() => {
+        return localStorage.getItem('soundMuted') === 'true';
+    });
+
+    // Sound playback wrapper
+    const playSound = (type) => {
+        if (!isMuted) {
+            playGameSound(type);
+        }
+    };
+
+    const toggleMute = () => {
+        const newMuted = !isMuted;
+        setIsMuted(newMuted);
+        localStorage.setItem('soundMuted', newMuted);
+    };
 
     // Turn Indicator Glow
     const glowStyle = isMyTurn ? {
@@ -49,15 +96,26 @@ function Game() {
                 symbolRef.current = data.symbol;
             }
             if (data.pairId) setPairId(data.pairId);
+            if (data.round) setRoundNumber(data.round);
             setBoard(Array(9).fill(null));
 
             const startingTurn = data.symbol === 'X';
             console.log(`🏁 Game Started. I am ${data.symbol}. My Turn? ${startingTurn}`);
             setIsMyTurn(startingTurn);
+            playSound('countdown'); // Play countdown sound on game start
         }
 
         function onRoundOver(data) {
             console.log("🔔 onRoundOver:", data);
+
+            // Play sound based on winner
+            if (data.winner === 'You') {
+                playSound('win');
+            } else if (data.winner === 'Draw') {
+                playSound('draw');
+            } else {
+                playSound('loss');
+            }
 
             // Show overlay
             setRoundResult({ winner: data.winner, visible: true });
@@ -87,7 +145,7 @@ function Game() {
 
         function onTournamentOver(data) {
             console.log("🏁 Tournament Over:", data);
-            navigate(`/results/${roomCode}`, { state: { results: data.results } });
+            navigate(`/results/${roomCode}`, { state: { results: data.results, leaderboard: data.leaderboard } });
         }
 
         socket.on('update_board', onUpdateBoard);
@@ -110,10 +168,20 @@ function Game() {
     // 2. Timer Logic
     useEffect(() => {
         const timerInterval = setInterval(() => {
-            setTimer(t => t > 0 ? t - 1 : 0);
+            setTimer(t => {
+                if (t === 1 && isMyTurn) {
+                    // Timer just expired and it's my turn - notify server
+                    console.log('⏱️ Timer expired! Requesting auto-move from server');
+                    socket.emit('player_timeout', {
+                        roomCode: roomCode || location.state?.roomCode,
+                        pairId
+                    });
+                }
+                return t > 0 ? t - 1 : 0;
+            });
         }, 1000);
         return () => clearInterval(timerInterval);
-    }, []);
+    }, [isMyTurn, pairId, roomCode, location.state?.roomCode]);
 
     // Reset timer on turn change
     useEffect(() => {
@@ -132,6 +200,8 @@ function Game() {
             console.warn("⚠️ Cell occupied!");
             return;
         }
+
+        playSound('move'); // Play click sound
 
         console.log("📤 Emitting make_move...");
         socket.emit('make_move', {
@@ -192,11 +262,28 @@ function Game() {
                 background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '15px', marginBottom: '20px'
             }}>
                 <div className="opponent-info" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '1.5em' }}>🕵️‍♂️</span>
+                    <span style={{ fontSize: '1.5em' }}>🕵️‍♂</span>
                     <span>{opponentName}</span>
                 </div>
                 <div className="score" style={{ fontSize: '2em', fontWeight: 'bold', color: '#ffd700' }}>
                     {score.me} - {score.them}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ fontSize: '0.9em', color: '#888' }}>Round {roundNumber}</div>
+                    <button
+                        onClick={toggleMute}
+                        style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.3)',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            fontSize: '0.9em'
+                        }}
+                    >
+                        {isMuted ? '🔇' : '🔊'}
+                    </button>
                 </div>
                 <div className="timer" style={{
                     border: `2px solid ${timer < 10 ? 'red' : '#00ff00'}`,
@@ -241,3 +328,4 @@ function Game() {
 }
 
 export default Game;
+

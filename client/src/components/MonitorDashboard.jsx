@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { socket } from '../socket';
 import { motion } from 'framer-motion';
 
-function HostDashboard() {
+function MonitorDashboard() {
     const { roomCode } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -16,7 +16,7 @@ function HostDashboard() {
         }
 
         function onTournamentOver(data) {
-            navigate(`/results/${roomCode}`, { state: { results: data.results } });
+            navigate(`/results/${roomCode}`, { state: { results: data.results, leaderboard: data.leaderboard } });
         }
 
         socket.on('matches_updated', onMatchesUpdated);
@@ -35,11 +35,45 @@ function HostDashboard() {
         navigate(`/game/${roomCode}`, { state: { isSpectator: true, pairId } });
     };
 
+    useEffect(() => {
+        console.log("📺 MonitorDashboard mounted. Matches:", matches);
+    }, []);
+
     return (
-        <div className="host-dashboard">
-            <h2>Tournament Monitor 👁️</h2>
-            <div className="status-bar" style={{ marginBottom: '20px', color: '#00ffea' }}>
-                Active Matches: {matches.filter(m => m.status === 'playing').length}
+        <div className="host-dashboard" style={{ padding: '20px', minHeight: '100vh', background: '#1a1a2e' }}>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h2 style={{ margin: 0, fontSize: '2rem', textShadow: '0 0 10px rgba(0,255,234,0.5)' }}>Tournament Monitor 👁️</h2>
+                <button
+                    onClick={() => {
+                        if (window.confirm("⚠️ ARE YOU SURE?\n\nThis will immediately END all active matches and calculate final results. Any waiting players will be cut short.")) {
+                            socket.emit('force_end_game', { roomCode });
+                        }
+                    }}
+                    style={{
+                        backgroundColor: '#ff0055',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        boxShadow: '0 0 15px rgba(255, 0, 85, 0.4)',
+                        fontSize: '1rem',
+                        transition: 'transform 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <span>🛑</span> End Tournament
+                </button>
+            </div>
+
+            <div className="status-bar" style={{ marginBottom: '20px', color: '#00ffea', fontSize: '1.2rem' }}>
+                Active Matches: <span style={{ fontWeight: 'bold' }}>{matches.filter(m => m.status === 'playing').length}</span>
             </div>
 
             <div className="carousel-container" style={{
@@ -78,4 +112,4 @@ function HostDashboard() {
     );
 }
 
-export default HostDashboard;
+export default MonitorDashboard;

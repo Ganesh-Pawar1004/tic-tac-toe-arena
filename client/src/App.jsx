@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { socket } from './socket';
 import Landing from './components/Landing';
-import Lobby from './components/Lobby';
+import GameLobby from './components/GameLobby';
 import Game from './components/Game';
-import HostDashboard from './components/HostDashboard'; // For Host Monitor
+import MonitorDashboard from './components/MonitorDashboard'; // For Host Monitor
 import Results from './components/Results';
 import DebugConsole from './components/DebugConsole';
 
@@ -63,6 +63,7 @@ function App() {
                     } else {
                         console.warn("❌ Rejoin failed:", response.message);
                         localStorage.removeItem('lastRoom'); // Clear stale session
+                        navigate('/'); // gracefully handle room not found
                     }
                 });
             }
@@ -96,9 +97,9 @@ function App() {
             </div>
             <Routes>
                 <Route path="/" element={<Landing />} />
-                <Route path="/lobby/:roomCode" element={<Lobby />} />
+                <Route path="/lobby/:roomCode" element={<GameLobby />} />
                 <Route path="/game/:roomCode" element={<Game />} />
-                <Route path="/monitor/:roomCode" element={<HostDashboard />} />
+                <Route path="/monitor/:roomCode" element={<MonitorDashboard />} />
                 <Route path="/results/:roomCode" element={<Results />} />
             </Routes>
             <DebugConsole />
