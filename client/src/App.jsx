@@ -11,6 +11,8 @@ import DebugConsole from './components/DebugConsole';
 function App() {
     const navigate = useNavigate();
     const [isConnected, setIsConnected] = useState(socket.connected);
+    const [rejoinStatus, setRejoinStatus] = useState('idle'); // idle, rejoining, success, error
+    const [rejoinError, setRejoinError] = useState('');
 
     useEffect(() => {
         // 1. Generate/Retrieve Player ID
@@ -22,6 +24,7 @@ function App() {
         console.log("🆔 Player ID:", myId);
 
         function onConnect() {
+            setRejoinStatus('idle');
             console.log("🟢 onConnect triggered! Socket ID:", socket.id);
             setIsConnected(true);
 
@@ -30,26 +33,18 @@ function App() {
             console.log("📂 Checking localStorage for lastRoom:", lastRoom);
 
             if (lastRoom) {
+                setRejoinStatus('rejoining');
                 console.log("🔄 Attempting to rejoin room:", lastRoom);
                 socket.emit('rejoin_game', { roomCode: lastRoom, playerId: myId }, (response) => {
                     console.log("📩 Rejoin response received:", response);
                     if (response.success) {
+                        setRejoinStatus('success');
                         console.log("✅ Rejoined successfully!", response);
 
                         if (response.isHost) {
                             // Host Logic
                             if (response.state === 'playing' || response.state === 'lobby') {
-                                // For host, we might need to fetch the pairs data again?
-                                // HostDashboard listens to 'host_monitor_start' or just renders.
-                                // If state is playing, HostDashboard needs 'pairs'.
-                                // For now, send them to Lobby if lobby, Monitor if playing.
                                 const target = response.state === 'lobby' ? `/lobby/${lastRoom}` : `/monitor/${lastRoom}`;
-                                // We need to pass state. For monitor, we need pairs.
-                                // Server didn't send pairs in 'gameState' for host yet. 
-                                // Let's just navigate causing a mount, 
-                                // and maybe HostDashboard should "fetch" data or listen for an update?
-                                // Simplified: Navigate to Lobby, let them click Start? 
-                                // No, if playing, go to monitor.
                                 navigate(target, { state: { ...response, isHost: true } });
                             }
                         } else {
@@ -62,8 +57,10 @@ function App() {
                         }
                     } else {
                         console.warn("❌ Rejoin failed:", response.message);
+                        setRejoinStatus('error');
+                        setRejoinError(response.message);
                         localStorage.removeItem('lastRoom'); // Clear stale session
-                        navigate('/'); // gracefully handle room not found
+                        setTimeout(() => setRejoinStatus('idle'), 3000); // Clear error after 3s
                     }
                 });
             }
@@ -92,9 +89,22 @@ function App() {
     return (
         <div className="container">
             <h1>Anonymous Arena</h1>
-            <div className="connection-status" style={{ fontSize: '0.8em', color: isConnected ? '#00ff00' : '#ff0000' }}>
+            <div className="connection-status" style={{ fontSize: '0.8em', color: isConnected ? '#00ff00' : '#ff0000', marginBottom: '10px' }}>
                 {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
             </div>
+
+            {rejoinStatus === 'rejoining' && (
+                <div style={{ background: '#333', padding: '10px', borderRadius: '5px', marginBottom: '20px', color: '#ffd700' }}>
+                    🔄 Rejoining previous session...
+                </div>
+            )}
+
+            {rejoinStatus === 'error' && (
+                <div style={{ background: '#ff3333', padding: '10px', borderRadius: '5px', marginBottom: '20px', color: 'white' }}>
+                    ❌ Rejoin Failed: {rejoinError}
+                </div>
+            )}
+
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/lobby/:roomCode" element={<GameLobby />} />

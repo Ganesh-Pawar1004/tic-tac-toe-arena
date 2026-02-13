@@ -211,12 +211,14 @@ function Game() {
         });
     };
 
-    if (!mySymbol || !pairId) {
+    const isSpectator = location.state?.isSpectator || false;
+
+    if (!pairId || (!mySymbol && !isSpectator)) {
         return (
             <div className="container" style={{ textAlign: 'center' }}>
                 <h2>⚠️ Connection Lost</h2>
                 <p>Please return to the lobby and rejoin.</p>
-                <p style={{ fontSize: '0.8em', color: '#aaa' }}>Debug: Missing Symbol or PairID</p>
+                <p style={{ fontSize: '0.8em', color: '#aaa' }}>Debug: Missing Symbol or PairID (Spectator: {isSpectator ? 'Yes' : 'No'})</p>
                 <a href="/" style={{ color: '#ffd700' }}>Back to Home</a>
             </div>
         );

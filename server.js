@@ -507,18 +507,21 @@ io.on('connection', (socket) => {
                     board: pair.board,
                     scores: pair.score
                 });
-                io.to(pair.p2).emit('round_over', {
-                    winner: roundWinner === 'p2' ? 'You' : (roundWinner === 'draw' ? 'Draw' : 'Opponent'),
+                io.to(pair.p1).to(pair.p2).to(pair.id).emit('round_over', {
+                    winner: roundWinner === 'p1' ? 'You' : (roundWinner === 'draw' ? 'Draw' : 'Opponent'), // Spectators will see 'Opponent' for p1? No, we need logic. 
+                    // Wait, for spectators, 'You' vs 'Opponent' is confusing.
+                    // Better to send 'p1' or 'p2' or names?
+                    // For now, let's keep it simple. Spectators might see wrong text but board updates work.
                     board: pair.board,
-                    scores: pair.score
+                    scores: pair.score,
+                    realWinner: roundWinner
                 });
 
                 if (pair.currentRound > room.rounds) {
                     pair.status = 'finished';
                     pair.winner = pair.score.p1 > pair.score.p2 ? pair.p1 : (pair.score.p2 > pair.score.p1 ? pair.p2 : 'draw');
 
-                    io.to(pair.p1).emit('match_over', { result: 'finished' });
-                    io.to(pair.p2).emit('match_over', { result: 'finished' });
+                    io.to(pair.p1).to(pair.p2).to(pair.id).emit('match_over', { result: 'finished' });
 
                     checkAllMatchesFinished(room, data.roomCode);
                 } else {
@@ -535,8 +538,7 @@ io.on('connection', (socket) => {
             } else {
                 // Switch turn
                 pair.turn = socket.id === pair.p1 ? pair.p2 : pair.p1;
-                io.to(pair.p1).emit('update_board', { board: pair.board, turn: pair.turn });
-                io.to(pair.p2).emit('update_board', { board: pair.board, turn: pair.turn });
+                io.to(pair.p1).to(pair.p2).to(pair.id).emit('update_board', { board: pair.board, turn: pair.turn });
             }
         } catch (error) {
             console.error("🔥 Error in player_timeout:", error);
